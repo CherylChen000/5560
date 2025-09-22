@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from app.bigram_model import BigramModel
 import numpy as np
-from app.embeddings import embed_texts, cosine_similarity, get_nlp
+from app.embeddings import embed_texts, cosine_similarity, nlp
 from app.schemas import (
     TextGenerationRequest,
     EmbedRequest, EmbedResponse, 

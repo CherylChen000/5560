@@ -115,3 +115,13 @@ class TextGenerationRequest(BaseModel):
     """
     start_word: str
     length: int = 20
+
+class BigramGenRequest(TextGenerationRequest):
+    """Backward-compatible alias for older imports."""
+    pass
+
+from pydantic import BaseModel
+
+class BigramGenResponse(BaseModel):
+    """Alias response model for /generate."""
+    generated_text: str
