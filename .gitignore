@@ -9,3 +9,9 @@ models/
 build/
 dist/
 *.log
+cat >> .gitignore <<'EOF'
+*.whl
+models/
+data/
+*.pth
+*.pt
