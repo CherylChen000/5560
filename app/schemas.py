@@ -125,3 +125,13 @@ from pydantic import BaseModel
 class BigramGenResponse(BaseModel):
     """Alias response model for /generate."""
     generated_text: str
+
+# --- GAN request schema ---
+from pydantic import BaseModel
+
+class GANSampleRequest(BaseModel):
+    n: int = 64                      # number of images (should be square like 16, 25, 36, 49, 64)
+    ckpt_path: str | None = None     # path to checkpoint file (e.g., "artifacts/gan/ckpt_e20.pt")
+    z_dim: int = 100                 # latent noise vector dimension
+    seed: int | None = None          # optional random seed for reproducibility
+
