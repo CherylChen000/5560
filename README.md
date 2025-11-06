@@ -1,185 +1,164 @@
 Project Structure
-app/
-  __init__.py
-  bigram_model.py       # your original logic (only a one-line constructor call was fixed)
-  embeddings.py         # loads en_core_web_lg; uses nlp(text).vector
-  main.py               # original routes + new embeddings + health
-  schemas.py            # Pydantic models (with explanations)
-requirements.txt
-Dockerfile              # optional (builds a runnable image)
-README.md
+SPS_GENAI/
+│
+├── app/
+│   ├── __init__.py
+│   ├── bigram_model.py          # Text bigram model
+│   ├── cnn_model.py             # CNN classifier (CIFAR-10)
+│   ├── gan_model.py             # DCGAN generator/discriminator
+│   ├── diffusion_model.py       # DDPM model for CIFAR-10
+│   ├── energy_model.py          # Energy-Based Model (EBM) for CIFAR-10
+│   ├── embeddings.py            # spaCy word-vector embeddings API
+│   ├── infer_cifar10.py
+│   ├── infer_gan.py
+│   ├── infer_energy.py
+│   ├── infer_diffusion.py
+│   ├── main.py                  # FastAPI app with all endpoints
+│   ├── schemas.py               # Pydantic data schemas
+│   ├── train_cifar10.py
+│   ├── train_gan.py
+│   ├── train_energy_cifar10.py
+│   ├── train_diffusion_cifar10.py
+│
+├── helper_lib/
+│   ├── __init__.py
+│   ├── data_loader.py
+│   ├── evaluator.py
+│   ├── model.py
+│   ├── trainer.py
+│   └── utils.py
+│
+├── artifacts/
+│   ├── energy/                  # EBM checkpoints + sample images
+│   └── diffusion/               # Diffusion checkpoints + samples
+│
+├── data/                        # MNIST / CIFAR-10 datasets (auto-downloaded)
+├── Dockerfile
+├── requirements.txt
+├── README.md
+├── energy.png                   # latest generated EBM sample
+├── diffusion.png                # latest generated diffusion sample
+└── .gitignore
+
+
 
 Prerequisites
-
 Python 3.11+
 
 (Optional) Docker Desktop
+docker build -t fastapi-genai .
+docker run -p 8000:8000 fastapi-genai
+# visit http://localhost:8000/docs
 
-Quickstart (no Docker)
-# 0) clone the repo
-git clone https://github.com/<YOUR-USER>/<YOUR-REPO>.git
-cd <YOUR-REPO>
 
-# 1) create & activate a virtualenv
+Requirements
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.5
+torch>=2.2
+torchvision>=0.17
+numpy>=1.26
+pillow>=10.0
+tqdm>=4.66
+spacy>=3.7
+requests>=2.31
+
+Environment Setup
+# 1️⃣ Clone the repo
+git clone https://github.com/CherylChen000/5560.git
+cd 5560
+
+# 2️⃣ Create & activate virtual environment
 python -m venv .venv
-source .venv/bin/activate        # Windows: .\.venv\Scripts\Activate.ps1
+source .venv/bin/activate          # Windows: .\.venv\Scripts\Activate.ps1
 
-# 2) install dependencies
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r requirements.txt
+# 3️⃣ Install dependencies
+pip install -r requirements.txt
 
-# 3) download the spaCy model used by the notebook
+# 4️⃣ Download spaCy model (for embeddings)
 python -m spacy download en_core_web_lg
 
-# 4) run the API
+# 5️⃣ Run API locally
 uvicorn app.main:app --reload
-# open http://127.0.0.1:8000/docs
 
-API Reference
-Original Endpoints (Module 1)
-
-GET /
-Returns {"Hello": "World"}.
-
-POST /generate
-Body
-
-{ "start_word": "the", "length": 20 }
+# Then open http://127.0.0.1:8000/docs
 
 
-Response
 
-{ "generated_text": "..." }
+Module Overview
 
+Module 1 – Bigram Text Model
+Generates short text sequences using bigram probabilities.
 
-GET /gaussian?mean=0&variance=1&size=1
-Returns an array of samples from Normal(mean, variance).
-
-New Endpoints (Module 2)
-
-GET /health
-Shows service status and the loaded spaCy model (should be en_core_web_lg).
-
-POST /embeddings
-Body
-
-{ "texts": ["king", "queen"] }
-
-
-Response
-
-{
-  "model": "en_core_web_lg",
-  "dim": 300,
-  "vectors": [[...],[...]]
-}
-
-
-POST /embeddings/similarity
-Body
-
-{ "text_a": "king", "text_b": "queen" }
-
-
-Response
-
-{ "model": "en_core_web_lg", "dim": 300, "similarity": 0.78 }
-
-Example cURL
-# health
-curl -s http://127.0.0.1:8000/health | jq
-
-# bigram generate (original)
-curl -s -X POST http://127.0.0.1:8000/generate \
+curl -X POST http://127.0.0.1:8000/generate \
   -H "Content-Type: application/json" \
-  -d '{"start_word": "the", "length": 10}' | jq
+  -d '{"start_word":"the","length":10}'
 
-# embeddings
-curl -s -X POST http://127.0.0.1:8000/embeddings \
+
+Module 2 – spaCy Embeddings & Similarity
+
+Returns 300-dimensional vectors from en_core_web_lg.
+
+curl -X POST http://127.0.0.1:8000/embeddings \
   -H "Content-Type: application/json" \
-  -d '{"texts": ["king", "queen"]}' | jq
+  -d '{"texts":["king","queen"]}'
 
-# similarity
-curl -s -X POST http://127.0.0.1:8000/embeddings/similarity \
+Computes similarity:
+
+curl -X POST http://127.0.0.1:8000/embeddings/similarity \
   -H "Content-Type: application/json" \
-  -d '{"text_a": "king", "text_b": "queen"}' | jq
-
-Screenshots (optional but helpful)
-
-Create docs/screenshots/ and add PNGs named like:
-
-docs/
-  screenshots/
-    swagger.png                # /docs page
-    embeddings_response.png    # POST /embeddings response
-    docker_desktop.png         # container running (optional)
+  -d '{"text_a":"king","text_b":"queen"}'
 
 
-Reference them here:
+Module 6 – GAN on MNIST
 
-Swagger UI
+Implements a DCGAN for handwritten-digit generation.
 
+python -m app.train_gan
 
-Embeddings Response
+Generates samples:
 
+curl -X POST http://127.0.0.1:8000/gan/sample \
+  -H "Content-Type: application/json" \
+  -d '{"n":64}' \
+  --output gan.png
 
-Docker Desktop (optional)
+Module 8 – Energy-Based Model (EBM)
 
+Learns an energy landscape on CIFAR-10.
 
-Optional: Docker
-# build (from the project root)
-docker build -t fastapi-embeddings .
+Trains quickly (~3 epochs demo):
 
-# run (host:8000 -> container:8000)
-docker run -p 8000:8000 fastapi-embeddings
+python -m app.train_energy_cifar10
 
-# then open http://localhost:8000/docs
+Generates samples via API:
 
-
-What Docker does: builds a self-contained image with Python 3.11, requirements, and the spaCy en_core_web_lg model baked in, then starts Uvicorn in a container.
-
-Notes on Implementation
-
-Embeddings logic mirrors the notebook exactly:
-
-import spacy
-nlp = spacy.load("en_core_web_lg")
-doc = nlp(text)
-vec = doc.vector
+curl -X POST http://127.0.0.1:8000/energy/sample \
+  -H "Content-Type: application/json" \
+  -d '{"n":64}' \
+  --output energy.png
+open energy.png
 
 
-Bigram model retains your original functions and probability logic.
-Only a tiny constructor fix was applied so it doesn’t crash:
+Module 8 – Diffusion Model (DDPM)
 
-self.vocab, self.bigram_probs = self.analyze_bigrams(" ".join(corpus))
+Lightweight U-Net diffusion model for CIFAR-10.
 
-Troubleshooting
+Train 1 epoch demo:
 
-ModuleNotFoundError: spacy
-Ensure deps and model are installed:
+python -m app.train_diffusion_cifar10
 
-python -m pip install -r requirements.txt
-python -m spacy download en_core_web_lg
+Sample via API:
 
+curl -X POST http://127.0.0.1:8000/diffusion/sample \
+  -H "Content-Type: application/json" \
+  -d '{"n":64,"T":400}' \
+  --output diffusion.png
+open diffusion.png
 
-ImportError: cannot import name 'BigramModel'
-Make sure app/__init__.py exists (even empty) and imports use:
+Expected Results
 
-from app.bigram_model import BigramModel
+Energy Model: fuzzy colorful blocks that gradually shape into object-like forms.
 
-
-Docker pull/build errors on macOS (credential helper)
-Edit ~/.docker/config.json and remove "credsStore": "desktop" if pulls fail.
-
-Submission
-
-Verify endpoints at http://127.0.0.1:8000/docs.
-
-Commit & push:
-
-git add .
-git commit -m "Module 2: add spaCy embeddings; preserve original bigram API"
-git push
-
-
-Submit the repo URL: https://github.com/CherylChen000/5560.
+Diffusion Model: noisy → structured images with clearer texture.
+Both return valid PNG grids confirming correct deployment.
