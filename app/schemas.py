@@ -37,3 +37,12 @@ class GANSampleRequest(BaseModel):
     ckpt_path: str | None = None  # path to a checkpoint; if None, use latest
     z_dim: int = 100
     seed: int | None = None     # optional for reproducibility
+
+class EnergySampleRequest(BaseModel):
+    ckpt_path: str | None = None
+    n: int = 64
+
+class DiffusionSampleRequest(BaseModel):
+    ckpt_path: str | None = None
+    n: int = 64
+    T: int = 400
