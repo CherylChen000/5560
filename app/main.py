@@ -118,7 +118,7 @@ def gan_sample(req: GANSampleRequest):
         imgs = G(z).cpu()
         grid = make_grid(imgs, nrow=int(req.n ** 0.5), normalize=True, value_range=(-1, 1))
         buf = BytesIO()
-        save_image(grid, buf)
+        save_image(grid, buf, format="PNG")  # add format for buffer saves
         buf.seek(0)
 
     return StreamingResponse(buf, media_type="image/png")
