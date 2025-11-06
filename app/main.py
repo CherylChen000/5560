@@ -19,6 +19,12 @@ from app.schemas import (
 from app.infer_cifar10 import load_cnn, predict_image_bytes
 from app.gan_model import Generator
 
+from io import BytesIO
+from app.energy_model import EnergyNet, langevin_sample
+from app.diffusion_model import UNetSmall, Diffusion
+from app.schemas import EnergySampleRequest, DiffusionSampleRequest
+
+
 app = FastAPI(title="FastAPI: Bigram + spaCy Embeddings + CIFAR10 + GAN")
 
 # keep the small corpus for bigram demo
@@ -119,6 +125,50 @@ def gan_sample(req: GANSampleRequest):
         grid = make_grid(imgs, nrow=int(req.n ** 0.5), normalize=True, value_range=(-1, 1))
         buf = BytesIO()
         save_image(grid, buf, format="PNG")  # add format for buffer saves
+        buf.seek(0)
+
+    return StreamingResponse(buf, media_type="image/png")
+
+@app.post("/energy/sample")
+def energy_sample(req: EnergySampleRequest):
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    ckpt = req.ckpt_path or _latest_ckpt("./artifacts/energy")
+    if not ckpt or not os.path.exists(ckpt):
+        raise HTTPException(status_code=400, detail="Energy checkpoint not found. Train first or provide ckpt_path.")
+
+    state = torch.load(ckpt, map_location=device)
+    net = EnergyNet().to(device)
+    net.load_state_dict(state["model"])
+    net.eval()
+
+    with torch.no_grad():
+        imgs = langevin_sample(net, n=req.n, device=device)
+        grid = make_grid(imgs.cpu(), nrow=int(req.n ** 0.5), normalize=True, value_range=(-1, 1))
+        buf = BytesIO()
+        save_image(grid, buf, format="PNG")
+        buf.seek(0)
+
+    return StreamingResponse(buf, media_type="image/png")
+
+
+@app.post("/diffusion/sample")
+def diffusion_sample(req: DiffusionSampleRequest):
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    ckpt = req.ckpt_path or _latest_ckpt("./artifacts/diffusion")
+    if not ckpt or not os.path.exists(ckpt):
+        raise HTTPException(status_code=400, detail="Diffusion checkpoint not found. Train first or provide ckpt_path.")
+
+    state = torch.load(ckpt, map_location=device)
+    net = UNetSmall().to(device)
+    net.load_state_dict(state["model"])
+    net.eval()
+
+    diff = Diffusion(net, T=req.T, device=device)
+    with torch.no_grad():
+        imgs = diff.sample(n=req.n).cpu()
+        grid = make_grid(imgs, nrow=int(req.n ** 0.5), normalize=True, value_range=(-1, 1))
+        buf = BytesIO()
+        save_image(grid, buf, format="PNG")
         buf.seek(0)
 
     return StreamingResponse(buf, media_type="image/png")
