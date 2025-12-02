@@ -1,9 +1,11 @@
 fastapi==0.112.2
 uvicorn[standard]==0.30.6
 pydantic==2.9.1
-spacy==3.7.5
 numpy==1.26.4
 matplotlib==3.9.0
 torch==2.4.1
 torchvision==0.19.1
 pillow==10.4.0 
+transformers==4.45.0
+datasets==3.0.1
+python-multipart==0.0.16

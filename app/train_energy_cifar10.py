@@ -60,3 +60,4 @@ for epoch in range(1, EPOCHS + 1):
                os.path.join(OUT_DIR, f"ckpt_e{epoch:02d}.pt"))
 
 print("EBM training done.")
+

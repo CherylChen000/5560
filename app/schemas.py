@@ -46,3 +46,13 @@ class DiffusionSampleRequest(BaseModel):
     ckpt_path: str | None = None
     n: int = 64
     T: int = 400
+
+
+class LLMGenerationRequest(BaseModel):
+    question: str
+    max_new_tokens: int = 64
+
+class LLMRLGenerationRequest(BaseModel):
+    question: str
+    max_new_tokens: int = 64
+
