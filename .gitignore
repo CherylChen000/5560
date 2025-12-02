@@ -1,17 +1,12 @@
-.venv/
-.venv311/
+.DS_Store
+*.zip
 __pycache__/
 *.pyc
-.DS_Store
-.ipynb_checkpoints/
-data/
-models/
-build/
-dist/
-*.log
-cat >> .gitignore <<'EOF'
-*.whl
-models/
-data/
-*.pth
+.venv/
+*.safetensors
 *.pt
+*.pth
+*.bin
+data/
+*.whl
+en_core_web_lg*
